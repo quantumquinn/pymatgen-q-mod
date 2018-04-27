@@ -12,6 +12,18 @@ import string
 import re
 
 
+class QEOutputParsingError(Exception):
+    """
+    Exception raised when there is a parsing error in the QE parser
+    """
+    pass
+    # def __init__(self,message):
+    # wrappedmessage = "Error parsing Quantum Espresso PW output: " + message
+    #     super(QEOutputParsingError,self).__init__(wrappedmessage)
+    #     self.message = wrappedmessage
+    #     self.module = "qe-pw"
+
+
 #conversion constants copied from aiida common
 bohr_to_ang = 0.52917720859
 ang_to_m = 1.e-10
@@ -129,7 +141,7 @@ def parse_raw_output(out_file, input_dict, parser_opts=None, xml_file=None, dir_
                  'lattice_vectors_relax','atomic_positions_relax',
                  'atomic_species_name']
     tmp_trajectory_data = copy.copy(trajectory_data)
-    for x in tmp_trajectory_data.iteritems():
+    for x in tmp_trajectory_data.items():
         if x[0] in skip_keys:
             continue
         out_data[x[0]] = x[1][-1]
@@ -159,7 +171,7 @@ def parse_raw_output(out_file, input_dict, parser_opts=None, xml_file=None, dir_
         # out_data keys take precedence and overwrite xml_data keys,
         # if the same key name is shared by both
         # dictionaries (but this should not happen!)
-    parameter_data = dict(xml_data.items() + out_data.items() + parser_info.items())
+    parameter_data = dict(xml_data, **out_data, **parser_info)
 
     # return various data.
     # parameter data will be mapped in ParameterData
@@ -189,7 +201,7 @@ def read_xml_card(dom,cardname):
         #the_card = dom.getElementsByTagName(cardname)[0]
         return the_card
     except Exception as e:
-        print e
+        print ( e )
         raise QEOutputParsingError('Error parsing tag {}'.format(cardname) )
 
 def parse_xml_child_integer(tagname,target_tags):
@@ -1128,7 +1140,7 @@ def parse_pw_text_output(data, xml_data={}, structure_data={}, input_dict={}):
                       'SCF correction compared to forces is too large, reduce conv_thr':"Forces are inaccurate (SCF correction is large): reduce conv_thr.",
                       }
 
-    all_warnings = dict(critical_warnings.items() + minor_warnings.items())
+    all_warnings = dict(critical_warnings,**minor_warnings)
 
     # Find some useful quantities.
     if not xml_data.get('number_of_bands',None) and not structure_data:
@@ -1760,3 +1772,6 @@ def parse_QE_errors(lines,count,warnings):
                 messages.append(irred_list.pop(irred_list.index(v)))
 
     return messages
+
+
+
