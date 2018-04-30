@@ -69,7 +69,7 @@ class PWInput(object):
         sections["system"] = system or {}
         sections["electrons"] = electrons or {}
         sections["ions"] = ions or {}
-        sections["cell"] = cell or {}
+        sections["cell"] = cell or {} 
 
         sssp_pseudos = {"Ag" : "ag_pbe_v1.4.uspp.F.UPF",
           "Al" : "Al.pbe-n-kjpaw_psl.1.0.0.UPF",
@@ -481,6 +481,7 @@ class PWInput(object):
                     key = m.group(1).strip()
                     key_ = m.group(2).strip()
                     val = m.group(3).strip()
+                    #print ( key, key_, val)
                     if key_ != "":
                         if sections[section].get(key, None) == None:
                             val_ = [0.0]*20 # MAX NTYP DEFINITION
@@ -540,7 +541,7 @@ class PWInput(object):
                     coords_are_cartesian = True
                     alat_multiply = True
 
-        #print( site_properties)
+        #print( sections)
 
         structure = Structure(Lattice(lattice), species, coords, 
                               coords_are_cartesian=coords_are_cartesian,
@@ -560,7 +561,7 @@ class PWInput(object):
             val: Actual value of PWINPUT parameter.
         """
         float_keys = ('etot_conv_thr','forc_conv_thr','conv_thr','Hubbard_U','Hubbard_J0','defauss',
-                      'starting_magnetization','celldm')
+                      'starting_magnetization','celldm','ecutwfc','ecutrho','degauss','mixing_beta')
 
         int_keys = ('nstep','iprint','nberrycyc','gdir','nppstr','ibrav','nat','ntyp','nbnd','nr1',
                     'nr2','nr3','nr1s','nr2s','nr3s','nspin','nqx1','nqx2','nqx3','lda_plus_u_kind',
@@ -575,6 +576,10 @@ class PWInput(object):
                      'ts_vdw_isolated','xdm','uniqueb','rhombohedral','realxz','block',
                      'scf_must_converge','adaptive_thr','diago_full_acc','tqr','remove_rigid_rot',
                      'refold_pos')
+
+        str_keys  = ('calculation','prefix','pseudo_dir','verbosity','restart_mode','outdir','occupations',
+                     'smearing','assume_isolated','diagonalization','mixing_mode','ion_dynamics','cell_dofree',
+                     'U_projection_type')
 
         def smart_int_or_float(numstr):
             if numstr.find(".") != -1 or numstr.lower().find("e") != -1:
@@ -596,6 +601,10 @@ class PWInput(object):
 
             if key in int_keys:
                 return int(re.match(r"^-?[0-9]+", val).group(0))
+
+            if key in str_keys:
+                #return re.match(r"'(\w+)',?",val).group(1)
+                return re.findall("'([^']*)'",val)[0]
 
         except ValueError:
             pass
