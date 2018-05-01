@@ -452,9 +452,15 @@ class PWInput(object):
             elif "ATOMIC_SPECIES" in line:
                 return ("pseudo", )
             elif "K_POINTS" in line:
-                return ("kpoints", line.split("{")[1][:-1])
+                if len(line.split('{')) > 1:
+                    return ("kpoints", line.split("{")[1][:-1])
+                else:
+                    return ("kpoints",line.split()[1])
             elif "CELL_PARAMETERS" in line or "ATOMIC_POSITIONS" in line:
-                return ("structure", line.split("{")[1][:-1])
+                if len(line.split('{')) > 1:
+                    return ("structure", line.split("{")[1][:-1])
+                else:
+                    return ("structure", line.split()[1])
             elif line == "/":
                 return None
             else:
@@ -513,7 +519,6 @@ class PWInput(object):
             elif mode[0] == "structure":
                 m_l = re.match(r'(-?\d+\.?\d*d?\d*)\s+(-?\d+\.?\d*d?\d*)\s+(-?\d+\.?\d*d?\d*)', line)
                 m_p = re.match(r'(\w+)\s+(-?\d+\.\d*d?\d*)\s+(-?\d+\.?\d*d?\d*)\s+(-?\d+\.?\d*d?\d*)', line)
-                alat = sections['system']['celldm'][0]*0.529177
                 #print( pseudo)
                 if m_l:
                     #print( m_l.groups())
@@ -540,7 +545,7 @@ class PWInput(object):
                 elif mode[1] == "alat":
                     coords_are_cartesian = True
                     alat_multiply = True
-
+                    alat = sections['system']['celldm'][0]*0.529177
         #print( sections)
 
         structure = Structure(Lattice(lattice), species, coords, 

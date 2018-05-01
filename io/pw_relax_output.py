@@ -11,7 +11,6 @@ import os
 import string
 import re
 
-
 class QEOutputParsingError(Exception):
     """
     Exception raised when there is a parsing error in the QE parser
@@ -1230,6 +1229,15 @@ def parse_pw_text_output(data, xml_data={}, structure_data={}, input_dict={}):
 #        elif 'EXX-fraction' in line:
 #            parsed_data['exx_fraction'] = float( line.split()[-1] )
 
+        elif 'crystal axes' in line:
+            # This is where the initial cell parameters are listed
+            a1 = data_lines[count+1].split()
+            a1 =[alat*bohr_to_ang*float(a1[i]) for i in range(3,6)]
+            a2 = data_lines[count+2].split()
+            a2 =[alat*bohr_to_ang*float(a2[i]) for i in range(3,6)]
+            a3 = data_lines[count+3].split()
+            a3 =[alat*bohr_to_ang*float(a3[i]) for i in range(3,6)]
+
         elif 'Cartesian axes' in line:
             # this is the part when initial positions and chemical
             # symbols are printed (they do not change during a run)
@@ -1446,34 +1454,40 @@ def parse_pw_text_output(data, xml_data={}, structure_data={}, input_dict={}):
                     parsed_data['warnings'].append('Error while parsing relaxation cell parameters.')
 
             elif 'ATOMIC_POSITIONS' in line:
-                try:
-                    this_key = 'atomic_positions_relax'
+               # try:
+                this_key = 'atomic_positions_relax'
                     #this_key_2 = 'atomic_species_name'
                     # the inizialization of tau prevent parsed_data to be associated
                     # to the pointer of the previous iteration
-                    metric = line.split('(')[1].split(')')[0]
-                    if metric not in ['alat','bohr','angstrom']:
-                        raise QEOutputParsingError('Error while parsing atomic_positions:'
+                metric = line.split('(')[1].split(')')[0]
+                if metric not in ['alat','bohr','angstrom','crystal']:
+                    raise QEOutputParsingError('Error while parsing atomic_positions:'
                                                    ' units not supported.')
-                    # TODO: check how to map the atoms in the original scheme
-                    positions = []
-                    #chem_symbols = []
-                    for i in range(nat):
-                        line2 = data_step[count+1+i].split()
-                        tau = [float(s) for s in line2[1:4]]
-                        #chem_symbol = str(line2[0]).rstrip()
-                        if metric == 'alat':
-                            tau = [ alat*float(s) for s in tau ]
-                        elif metric == 'bohr':
-                            tau = [ bohr_to_ang*float(s) for s in tau ]
-                        positions.append(tau)
-                        #chem_symbols.append(chem_symbol)
-                    try:
-                        trajectory_data[this_key].append(positions)
-                    except KeyError:
-                        trajectory_data[this_key] = [positions]
-                    #trajectory_data[this_key_2] = chem_symbols # the symbols do not change during a run
-                except Exception:
+                # TODO: check how to map the atoms in the original scheme
+                positions = []
+                #chem_symbols = []
+                for i in range(nat):
+                    line2 = data_step[count+1+i].split()
+                    tau = [float(s) for s in line2[1:4]]
+                    #chem_symbol = str(line2[0]).rstrip()
+                    if metric == 'alat':
+                        tau = [ alat*float(s) for s in tau ]
+                    elif metric == 'bohr':
+                        tau = [ bohr_to_ang*float(s) for s in tau ]
+                    elif metric == 'crystal':
+                        tau1 = [tau[0]*a1[i] for i in range(3)]
+                        tau2 = [tau[1]*a2[i] for i in range(3)]
+                        tau3 = [tau[2]*a3[i] for i in range(3)]
+                        tau = [tau1[i] + tau2[i] + tau3[i] for i in range(3)]
+                        #print ("Using crystal to parse")
+                    positions.append(tau)
+                    #chem_symbols.append(chem_symbol)
+                try:
+                    trajectory_data[this_key].append(positions)
+                except KeyError:
+                    trajectory_data[this_key] = [positions]
+                #trajectory_data[this_key_2] = chem_symbols # the symbols do not change during a run
+                #except Exception:
                     parsed_data['warnings'].append('Error while parsing relaxation atomic positions.')
 
             # NOTE: in the above, the chemical symbols are not those of AiiDA
