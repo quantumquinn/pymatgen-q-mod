@@ -546,7 +546,9 @@ class PWInput(object):
                     coords_are_cartesian = True
                     alat_multiply = True
                     alat = sections['system']['celldm'][0]*0.529177
-        #print( sections)
+        qe_pseudo = {}
+        for el in pseudo:
+            qe_pseudo[el] = pseudo[el]['pseudopot']
 
         structure = Structure(Lattice(lattice), species, coords, 
                               coords_are_cartesian=coords_are_cartesian,
@@ -554,7 +556,7 @@ class PWInput(object):
         return PWInput(structure=structure, control=sections["control"],
                        system=sections["system"], electrons=sections["electrons"], 
                        ions=sections["ions"], cell=sections["cell"], kpoints_mode=kpoints_mode,
-                       kpoints_grid=kpoints_grid, kpoints_shift=kpoints_shift)
+                       kpoints_grid=kpoints_grid, kpoints_shift=kpoints_shift,pseudo = qe_pseudo)
 
     def proc_val(key, val):
         """
