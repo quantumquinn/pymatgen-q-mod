@@ -1232,11 +1232,11 @@ def parse_pw_text_output(data, xml_data={}, structure_data={}, input_dict={}):
         elif 'crystal axes' in line:
             # This is where the initial cell parameters are listed
             a1 = data_lines[count+1].split()
-            a1 =[alat*bohr_to_ang*float(a1[i]) for i in range(3,6)]
+            a1 =[alat*float(a1[i]) for i in range(3,6)]
             a2 = data_lines[count+2].split()
-            a2 =[alat*bohr_to_ang*float(a2[i]) for i in range(3,6)]
+            a2 =[alat*float(a2[i]) for i in range(3,6)]
             a3 = data_lines[count+3].split()
-            a3 =[alat*bohr_to_ang*float(a3[i]) for i in range(3,6)]
+            a3 =[alat*float(a3[i]) for i in range(3,6)]
 
         elif 'Cartesian axes' in line:
             # this is the part when initial positions and chemical
