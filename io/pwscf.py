@@ -264,7 +264,7 @@ class PWInput(object):
                          pseudo[species.symbol]=nc_pseudos[species.symbol]
                      elif pseudo_lib == 'GBRV_US':
                          #This obviously will only work on my computer, directory can easily be changed for others
-                         possible_pseudos = listdir('/home/quinn/Documents/pymatgen_slab_tests/dft+U/GBRV_USPP_PBE_UPF_format')
+                         possible_pseudos = listdir('/storage/home/qjc5019/Pseudopotentials/Pseudos/GBRV_USPP_Library/GBRV_USPP_PBE_UPF_format/')
                          for pseudo_name in possible_pseudos:
                              #print( pseudo_name )
                              if species.symbol.lower() in pseudo_name:
@@ -456,11 +456,16 @@ class PWInput(object):
                     return ("kpoints", line.split("{")[1][:-1])
                 else:
                     return ("kpoints",line.split()[1])
-            elif "CELL_PARAMETERS" in line or "ATOMIC_POSITIONS" in line:
+            elif "CELL_PARAMETERS" in line: 
                 if len(line.split('{')) > 1:
-                    return ("structure", line.split("{")[1][:-1])
+                    return ("structure", line.split("{")[1][:-1],'cell')
                 else:
-                    return ("structure", line.split()[1])
+                    return ("structure", line.split()[1],'cell')
+            elif "ATOMIC_POSITIONS" in line:
+                if len(line.split('{')) > 1:
+                    return ("structure", line.split("{")[1][:-1],'atomic')
+                else:
+                    return ("structure", line.split()[1],'atomic')
             elif line == "/":
                 return None
             else:
@@ -536,20 +541,25 @@ class PWInput(object):
                     for k, v in site_properties.items():
                         if k != "pseudo":
                             site_properties[k].append(sections['system'][k][pseudo[m_p.group(1)]["index"]])
+                #print ( mode[1])
                 if mode[1] == "angstrom":
-                    coords_are_cartesian = True
+                    if mode[2] == 'atomic':
+                        coords_are_cartesian = True
                     alat_multiply = False
                 elif mode[1] == "crystal":
-                    coords_are_cartesian = False
+                    if mode[2] == 'atomic':
+                        coords_are_cartesian = False
                     alat_multiply = False
                 elif mode[1] == "alat":
-                    coords_are_cartesian = True
+                    if mode[2] == 'atomic':
+                        coords_are_cartesian = True
                     alat_multiply = True
                     alat = sections['system']['celldm'][0]*0.529177
+                
         qe_pseudo = {}
         for el in pseudo:
             qe_pseudo[el] = pseudo[el]['pseudopot']
-
+        #print ( coords_are_cartesian)
         structure = Structure(Lattice(lattice), species, coords, 
                               coords_are_cartesian=coords_are_cartesian,
                               site_properties=site_properties)
