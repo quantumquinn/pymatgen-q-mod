@@ -1152,7 +1152,11 @@ def parse_pw_text_output(data, xml_data={}, structure_data={}, input_dict={}):
                 elif 'number of atomic types' in line:
                     ntyp = int(line.split('=')[1])
                 elif 'unit-cell volume' in line:
-                    volume = float(line.split('=')[1].split('(a.u.)^3')[0])
+                    #print ( line.split('=')[1].split('(a.u.)^3'))
+                    try:
+                        volume = float(line.split('=')[1].split('(a.u.)^3')[0])
+                    except:
+                        pass
                 elif 'number of Kohn-Sham states' in line:
                     nbnd = int(line.split('=')[1])
                 elif "number of k points" in line:
@@ -1422,36 +1426,38 @@ def parse_pw_text_output(data, xml_data={}, structure_data={}, input_dict={}):
         for count,line in enumerate(data_step):
 
             if 'CELL_PARAMETERS' in line:
+                #print ("this step should be happening")
+                #try:
+                a1 = [float(s) for s in data_step[count+1].split()]
+                a2 = [float(s) for s in data_step[count+2].split()]
+                a3 = [float(s) for s in data_step[count+3].split()]
+                # try except indexerror for not enough lines
+                lattice = line.split('(')[1].split(')')[0].split('=')
+                if lattice[0].lower() not in ['alat','bohr','angstrom']:
+                    raise QEOutputParsingError('Error while parsing cell_parameters: '+\
+                                              'unsupported units {}'.format(lattice[0]) )
+
+                if 'alat' in lattice[0].lower():
+                    #print ("are we here?")
+                    a1 = [ alat*float(s) for s in a1 ]
+                    a2 = [ alat*float(s) for s in a2 ]
+                    a3 = [ alat*float(s) for s in a3 ]
+                    lattice_parameter_b = float(lattice[1])
+                    #if abs(lattice_parameter_b - alat) > lattice_tolerance:
+                    #    raise QEOutputParsingError("Lattice parameters mismatch! " + \
+                    #                              "{} vs {}".format(lattice_parameter_b, alat))
+                elif 'bohr' in lattice[0].lower():
+                    lattice_parameter_b*=bohr_to_ang
+                    a1 = [ bohr_to_ang*float(s) for s in a1 ]
+                    a2 = [ bohr_to_ang*float(s) for s in a2 ]
+                    a3 = [ bohr_to_ang*float(s) for s in a3 ]
                 try:
-                    a1 = [float(s) for s in data_step[count+1].split()]
-                    a2 = [float(s) for s in data_step[count+2].split()]
-                    a3 = [float(s) for s in data_step[count+3].split()]
-                    # try except indexerror for not enough lines
-                    lattice = line.split('(')[1].split(')')[0].split('=')
-                    if lattice[0].lower() not in ['alat','bohr','angstrom']:
-                        raise QEOutputParsingError('Error while parsing cell_parameters: '+\
-                                                   'unsupported units {}'.format(lattice[0]) )
+                    trajectory_data['lattice_vectors_relax'].append([a1,a2,a3])
+                except KeyError:
+                    trajectory_data['lattice_vectors_relax'] = [[a1,a2,a3]]
 
-                    if 'alat' in lattice[0].lower():
-                        a1 = [ alat*bohr_to_ang*float(s) for s in a1 ]
-                        a2 = [ alat*bohr_to_ang*float(s) for s in a2 ]
-                        a3 = [ alat*bohr_to_ang*float(s) for s in a3 ]
-                        lattice_parameter_b = float(lattice[1])
-                        if abs(lattice_parameter_b - alat) > lattice_tolerance:
-                            raise QEOutputParsingError("Lattice parameters mismatch! " + \
-                                                       "{} vs {}".format(lattice_parameter_b, alat))
-                    elif 'bohr' in lattice[0].lower():
-                        lattice_parameter_b*=bohr_to_ang
-                        a1 = [ bohr_to_ang*float(s) for s in a1 ]
-                        a2 = [ bohr_to_ang*float(s) for s in a2 ]
-                        a3 = [ bohr_to_ang*float(s) for s in a3 ]
-                    try:
-                        trajectory_data['lattice_vectors_relax'].append([a1,a2,a3])
-                    except KeyError:
-                        trajectory_data['lattice_vectors_relax'] = [[a1,a2,a3]]
-
-                except Exception:
-                    parsed_data['warnings'].append('Error while parsing relaxation cell parameters.')
+                #except Exception:
+                parsed_data['warnings'].append('Error while parsing relaxation cell parameters.')
 
             elif 'ATOMIC_POSITIONS' in line:
                # try:
