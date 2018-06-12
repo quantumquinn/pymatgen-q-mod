@@ -543,8 +543,8 @@ class AdsorbateSiteFinder(object):
             if all(p2 == adsorbate.frac_coords):
                 com = adslab.center_of_mass
                 p2 = [p2[0], p2[1], p2[2]-2.0*(p2[2]-com[2])]
-            print( adsorbate.frac_coords)
-            print( p2)
+            #print( adsorbate.frac_coords)
+            #print( p2)
             slab.append(adsorbate.specie, p2,
                         properties={"surface_properties": "adsorbate"})
             slab.append(adsorbate.specie, adsorbate.frac_coords,
