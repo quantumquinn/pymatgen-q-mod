@@ -537,6 +537,14 @@ class AdsorbateSiteFinder(object):
         # the slab using symmetry operations
         for adsorbate in adsorbates:
             p2 = adslab.get_symmetric_site(adsorbate.frac_coords)
+            #Handles cases with bad symmetry by assuming that the water can just 
+            #be exactly mirrored in the z axis through center of slab. A bit dangerous, but should work well
+            #enough in most cases
+            if all(p2 == adsorbate.frac_coords):
+                com = adslab.center_of_mass
+                p2 = [p2[0], p2[1], p2[2]-2.0*(p2[2]-com[2])]
+            print( adsorbate.frac_coords)
+            print( p2)
             slab.append(adsorbate.specie, p2,
                         properties={"surface_properties": "adsorbate"})
             slab.append(adsorbate.specie, adsorbate.frac_coords,

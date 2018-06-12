@@ -590,12 +590,15 @@ class Slab(Structure):
 
         sg = SpacegroupAnalyzer(self)
         ops = sg.get_symmetry_operations()
+        #print ( ops)
 
+ 
         # Each operation on a point will return an equivalent point.
         # We want to find the point on the other side of the slab.
         for op in ops:
             slab = self.copy()
             site2 = op.operate(point)
+            #print (site2)
             if "%.6f" % (site2[2]) == "%.6f" % (point[2]):
                 continue
 
@@ -606,6 +609,7 @@ class Slab(Structure):
             if sg.is_laue():
                 break
             else:
+                
                 # If not symmetric, remove the two added
                 # sites and try another symmetry operator
                 slab.remove_sites([len(slab) - 1])
